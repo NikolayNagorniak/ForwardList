@@ -1,17 +1,21 @@
 #include<iostream>
-#include<initializer_list>
+//#include<initializer_list>
 using namespace std;
 
 //#define INDEX_OPERATOR_CHECK
+//#define CONSTRUCTORS_CHECK
 #define HARDCORE_CHECK
 
+template<typename T>class List;
+
+template<typename T>
 class Element
 {
-	int Data;		//Значение элемента
-	Element* pNext;	//Адрес следующего элемента
+	T Data;		//Значение элемента
+	Element<T>* pNext;	//Адрес следующего элемента
 	static int count;
 public:
-	Element(int Data, Element* pNext = nullptr)
+	Element(T Data, Element<T>* pNext = nullptr)
 	{
 		this->Data = Data;
 		this->pNext = pNext;
@@ -23,14 +27,16 @@ public:
 		count--;
 		cout << "EDestructor:\t" << this << endl;
 	}
-	friend class List;
+	friend class List<T>;
 };
 
-int Element::count = 0;
+template<typename T>
+int Element<T>::count = 0;
 
+template<typename T>
 class List
 {
-	Element* Head;	//Адрес начала списка
+	Element<T>* Head;	//Адрес начала списка
 	int size;		//Размер списка
 public:
 	int get_size()const
@@ -59,18 +65,24 @@ public:
 	}
 
 	//			Operators:
-	int& operator[](int Index)
+	const T& operator[](int Index)const
 	{
-		Element* Temp = Head;
+		Element<T>* Temp = Head;
+		for (int i = 0; i < Index; i++)Temp = Temp->pNext;
+		return Temp->Data;
+	}
+	T& operator[](int Index)
+	{
+		Element<T>* Temp = Head;
 		for (int i = 0; i < Index; i++)Temp = Temp->pNext;
 		return Temp->Data;
 	}
 
 	//			Adding elements:
-	void push_front(int Data)
+	void push_front(T Data)
 	{
 		//1)Создаем новый элемент
-		Element* New = new Element(Data);
+		Element<T>* New = new Element<T>(Data);
 		//2)"Привязываем новый элемент к голове (Head)":
 		New->pNext = Head;
 		//3)Голову переводим на новый элемент
@@ -79,7 +91,7 @@ public:
 	}
 
 	//Добавление элемента в конец списка
-	void push_back(int Data)
+	void push_back(T Data)
 	{
 		if (Head == nullptr)
 		{
@@ -87,18 +99,18 @@ public:
 			return;
 		}
 		//1) Доходим до конца списка
-		Element* Temp = Head;
+		Element<T>* Temp = Head;
 		while (Temp->pNext != nullptr)
 		{
 			Temp = Temp->pNext;
 		}
 		//2) Добавляем элемент
-		Temp->pNext = new Element(Data);
+		Temp->pNext = new Element<T>(Data);
 		size++;
 	}
 
 	//Вставка значения по указанному индексу
-	void insert(int Index, int Data)
+	void insert(int Index, T Data)
 	{
 		if (Index == 0)
 		{
@@ -111,11 +123,11 @@ public:
 			return;
 		}
 		//1) Дойти до нужной позиции
-		Element* Temp = Head;
+		Element<T>* Temp = Head;
 		//if(sizeof(Temp))
 		for (int i = 0; i < Index - 1; i++)Temp = Temp->pNext;
 		//2) Добавить элемент в список
-		Element* New = new Element(Data);
+		Element<T>* New = new Element<T>(Data);
 		New->pNext = Temp->pNext;
 		Temp->pNext = New;
 		size++;
@@ -126,7 +138,7 @@ public:
 	{
 		if (Head == nullptr)return;
 		//1) Запоминаем адрес удаляемого элемента
-		Element* to_del = Head;
+		Element<T>* to_del = Head;
 		//2) Исключаем элемент из списка
 		Head = Head->pNext;
 		//3) Удаляем элемент из списка
@@ -145,7 +157,7 @@ public:
 		}
 
 		//1)Дойти до конца списка
-		Element* Temp = Head;
+		Element<T>* Temp = Head;
 		while (Temp->pNext->pNext != nullptr)
 		{
 			Temp = Temp->pNext;
@@ -173,9 +185,9 @@ public:
 		{
 			return;
 		}
-		Element* Temp = Head;
+		Element<T>* Temp = Head;
 		for (int i = 0; i < Index - 1; i++)Temp = Temp->pNext;
-		Element* to_del = Temp->pNext;
+		Element<T>* to_del = Temp->pNext;
 		Temp->pNext = Temp->pNext->pNext;
 		delete to_del;
 		size--;
@@ -183,7 +195,7 @@ public:
 
 	void print()
 	{
-		Element* Temp = Head;	//Temp - это итератор
+		Element<T>* Temp = Head;	//Temp - это итератор
 
 		while (Temp != nullptr)
 		{
@@ -194,10 +206,10 @@ public:
 	}
 
 	//	1. Конструктор копирования
-	List(const List& other):List()
+	List(const List<T>& other):List()
 	{
 		//this->Head = other.Head;
-		Element * Temp = other.Head;
+		Element<T> * Temp = other.Head;
 		while (Temp)
 		{
 			push_back(Temp->Data);
@@ -208,11 +220,11 @@ public:
 	}
 
 	//	2. Конструктор присваивания
-	List& operator=(const List& other)	//Ссылка List& в начале строки - нельзя присвоить ссылку в "значение"
+	List<T>& operator=(const List<T>& other)	//Ссылка List& в начале строки - нельзя присвоить ссылку в "значение"
 		//	"ссылка" = "ссылка"
 	{
 		if (this->Head != nullptr) this->Head = nullptr;	//Очистка от старых значений
-		Element* Temp = other.Head;
+		Element<T>* Temp = other.Head;
 		while (Temp)
 		{
 			push_back(Temp->Data);
@@ -224,7 +236,7 @@ public:
 	}
 
 	//	3. Конструктор перемещения - MoveConstructor
-	List(List&& other)
+	List(List<T>&& other)
 	{
 		//Копирование элементов и их количества с исходного списка
 		/*Element* Temp = other.Head;
@@ -243,11 +255,11 @@ public:
 	}
 
 	//	4. Перемещающее присвоение - MoveAssignment
-	List& operator=(List&& other)
+	List<T>& operator=(List<T>&& other)
 	{
 		//Копирование элементов и их количества с исходного списка
 		if (this->Head != nullptr) this->Head = nullptr;	//Очистка от старых значений
-		Element* Temp = other.Head;
+		Element<T>* Temp = other.Head;
 		while (Temp)
 		{
 			push_back(Temp->Data);
@@ -262,7 +274,7 @@ public:
 	}
 
 	//	5. Конструктор списка инициализации
-	List(initializer_list<int> list) : List()
+	List(initializer_list<T> list) : List()
 	{
 		for (auto& item : list)
 		{
@@ -273,10 +285,10 @@ public:
 };
 
 //	6. Конкатенация списков
-List operator+(List& left, List& right)
+template<typename T>
+List<T> operator+(const List<T>& left, const List<T>& right)
 {
-	List result;
-	result = left;
+	List<T> result = left;
 	for (int i = 0; i < right.get_size(); i++)
 	{
 		result.push_back(right[i]);
@@ -326,21 +338,22 @@ void main()
 	cout << endl;
 #endif // INDEX_OPERATOR_CHECK
 
+#ifdef CONSTRUCTORS_CHECK
 	//1. Конструктор копирования
 	cout << "\t1. Конструктор копирования" << endl;
-	List list01;
+	List<int> list01;
 	for (int i = 0; i < n; i++)
 	{
 		list01.push_back(rand() % 100);
 	}
 	list01.print();
 	cout << "\n\tКонструктор копирования:" << endl;
-	List list02 = List(list01);
+	List<int> list02 = List(list01);
 	list02.print();
 
 	//2. Конструктор присваивания
 	cout << "\n\t2. Конструктор присваивания" << endl;
-	List list03;
+	List<int> list03;
 	/*for (int i = 0; i < n; i++)
 	{
 		list03.push_back(33);
@@ -369,20 +382,24 @@ void main()
 	list05.print();
 	cout << "Старый список list02 после перемещения:" << endl;
 	list02.print();
+#endif // CONSTRUCTORS_CHECK
+
 
 #ifdef HARDCORE_CHECK
 	cout << "\n\t5.Проверка initializer_list:" << endl;
 
-	List list1 = { 3, 5, 8, 13, 21 };
+	List<int> list1 = { 3, 5, 8, 13, 21 };
 	list1.print();
-	List list2 = { 34, 55, 89 };
+	List<int> list2 = { 34, 55, 89 };
 	list2.print();
 
 	cout << "\n\t6.Конкатенация списков" << endl;
-	List list3 = list1 + list2;	//Конкатенация списков.
+	List<int> list3 = list1 + list2;	//Конкатенация списков.
 	list3.print();
 	//http://www.cplusplus.com/reference/initializer_list/initializer_list/
 #endif // HARDCORE_CHECK
 
+	List<double> dbl_list = { 2.5, 3.14, 8.2 };
+	dbl_list.print();
 
 }
